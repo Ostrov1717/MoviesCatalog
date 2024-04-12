@@ -1,0 +1,320 @@
+openapi: 3.0.1
+info:
+  title: "The movies catalog"
+  version: "1.0.0"
+  description: "Description of the film catalog API, which contains information about films and actors involved in the production of films"
+  contact:
+   name: Alex Alex
+   email: ostrov1717@gmail.com
+  
+servers:
+  - url: http//localhost:8080
+    description: Dev server
+  - url: http://127.0.0.1:8080
+    description: Test server
+    
+paths:
+  /movie:
+    post:
+      tags:
+        - movie
+      summary: Add a new movie to the catalog
+      requestBody:
+        description: The description of the new movie in the request body must match the Movie model
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Movie'
+        required: true
+      security:
+        - basicAuth: []
+      responses:
+        '201':
+          description: The information about film has been successfully added to the catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          description: Invalid movie information or insufficient information
+        '401':
+          description: Authentication is required to perform the post operation, but the client has not provided the appropriate credentials
+        '403':
+          description: There are no or insufficient rights to add a film to the catalog
+        default:
+          description: Server error
+          
+  /movie/{id}:
+    get:
+      summary: Receiving information about a movie with a specific id
+      description: Receiving information from catalog about the movie
+      tags:
+        - movie
+      parameters:
+        - name: id
+          in: path
+          description: "*Film ID*. *Example: 123* You can get information about a film listed in the catalog by its identification number. The ID number value ranges from 1 to 1001"
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: The movie with the entered id was found, information about the movie is displayed
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: "max-age=120"
+              description: Caching control, movie information can be used by the client for 120 seconds without re-calling the server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          description: The getting request failed due to an invalid request. Invalid request parameter id was sent
+        '404':
+          description: The movie that the client is trying to get information about was not found
+        default:
+          description: Server error
+    
+    delete:
+      tags:
+        - movie
+      summary: Deleting information about the movie with a specific id from catalog
+      description: Deleting from catalog about the movie
+      parameters:
+        - name: id
+          in: path
+          description: "*Film ID*. *Example: 123* You can delete information about a film listed in the catalog by its identification number. The ID number value ranges from 1 to 1001"
+          required: true
+          schema:
+            type: integer
+      security:
+        - basicAuth: []
+      responses:
+        '200': 
+          description: Information about the film has been successfully removed from the catalog
+        '400':
+          description: The deletion request failed due to an invalid request. Invalid request parameter was sent
+        '401':
+          description: Authentication is required to perform the delete operation, but the client has not provided the appropriate credentials
+        '403':
+          description: The client is authenticated but does not have rights to perform the delete operation
+        '404':
+          description: The movie that the client is trying to delete was not found
+        default:
+          description: Server error
+          
+  /movies:
+    get:
+      summary: Receive information about all films included in the catalog, broken down into pages
+      parameters:
+        - in: query
+          name: page
+          required: false
+          description: Page number (the number of records on the page (page size) is fixed and equal to 10). If the parameter is missing, all films included in the film catalog will be displayed
+          schema:
+            type: integer
+            example: 1
+      tags:
+        - movie
+      responses:
+        '200':
+          description: The request was successfully processed, the response contains information about all films included in the catalog located on a specific page
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: "max-age=240"
+              description: Caching control, movie information can be used by the client for 240 seconds without re-calling the server
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+        default:
+          description: Server error
+                  
+  /actor/{id}:
+    get:
+      summary: Request information about an actor with a specific id
+      tags:
+        - actor
+      parameters:
+        - name: id
+          in: path
+          description: "*Actor ID*. *Example: 123* You can get information about an actor listed in the catalog by identification number. The value of the identification number is in the range from 1 to 200"
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - in: cookie
+          name: actorInfo
+          description: Information about an actor with a specific id is cached in a cookie with a storage time of 120 seconds
+          schema:
+            $ref: '#/components/schemas/Actor'
+            
+      responses:
+        '200':
+          description: The actor with the entered id was found, information about the actor is displayed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Actor'
+        '400':
+          description: The getting request failed due to an invalid request. Invalid request parameter id was sent
+        '404':
+          description: The actor that the client is trying to get information about was not found
+        default:
+          description: Server error
+    
+    delete:
+      tags:
+        - actor
+      summary: Deleting information about the actor with a specific id from catalog 
+      description: Deleting from catalog information about the actor
+      parameters:
+        - name: id
+          in: path
+          description: "*Actor ID*. *Example: 123* You can get information about an actor listed in the catalog by identification number. The value of the identification number is in the range from 1 to 200"
+          required: true
+          schema:
+            type: integer
+      security:
+        - basicAuth: []
+      responses:
+        '200': 
+          description: Information about the actor has been successfully removed from the catalog
+        '400':
+          description: The deletion request failed due to an invalid request. Invalid request parameter id was sent
+        '401':
+          description: Authentication is required to perform the delete operation, but the client has not provided the appropriate credentials
+        '403':
+          description: The client is authenticated but does not have rights to perform the delete operation
+        '404':
+          description: The movie that the client is trying to delete was not found
+        default:
+          description: Server error
+    
+  /actor:
+    post:
+      tags:
+        - actor
+      summary: Add a new actor to the catalog
+      requestBody:
+        description: The description of the new actor in the request body must match the Actor model
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Actor'
+        required: true
+      security:
+        - basicAuth: []
+      responses:
+        '201':
+          description: The information about actor has been successfully added to the catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Actor'
+        '400':
+          description: Invalid actor information or insufficient information
+        '401':
+          description: Authentication is required to perform the post operation, but the client has not provided the appropriate credentials
+        '403':
+          description: There are not or insufficient rights to add a actor to the catalog
+        default:
+          description: Server error  
+        
+  /actors:
+    get:
+      summary: Receive information about all actors included in the catalog, broken down into pages
+      tags:
+        - actor
+      parameters:
+        - in: query
+          name: page
+          required: false
+          description: Page number (the number of records on the page (page size) is fixed and equal to 10). If the parameter is missing, all actors included in the film catalog will be displayed
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: The request was successfully processed, the response contains information about all films included in the catalog located on a specific page
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Actor'                
+          headers:
+            Cache-Control:
+              
+              schema:
+                type: string
+                example: "max-age=240"
+                description: Caching control, movie information can be used by the client for 240 seconds without re-calling the server
+        default:
+          description: Server error
+          
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      
+  schemas:
+    Movie:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 123
+        title:
+          type: string
+          example: Poor things
+        description:
+          type: string
+          example: Horror movie about life of artificial girl 
+        actors:
+          type: array
+          items:
+            type: string
+            example: ['Brad Pitt','Sharlize Theron']
+    Actor:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 123
+        firstName:
+          type: string
+          example: Brad
+        lastName:
+          type: string
+          example: Pitt
+        movies: 
+          type: array
+          items: 
+            type: string
+            example: ['Fury','Seven','Bullet train','Once Upon a Time in Hollywood']
+    User:
+      description: The user schema has been added to show the structure of User datas that are used for authentication and stored in the database
+      type: object
+      properties:
+        username:
+          type: string
+          example: Alex
+        password:
+          type: string
+          example: 9999
+  
+tags:
+  - name: movie
+    description: Movies operations
+  - name: actor
+    description: Actors operations
+  
